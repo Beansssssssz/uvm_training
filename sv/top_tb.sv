@@ -1,50 +1,27 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-module const_header_remover_base_test;
+`include "const_header_remover_item.sv"
+`include "const_header_remover_base_test.sv"
 
-    localparam int NUM_OF_WORDS_TO_CHECK = 100;
-    
+module top_tb;
 
     const_header_remover_item item1;
     const_header_remover_item item2;
 
     initial begin
+
+        // Checking the unit tests
+        run_test("const_header_remover_item_test");
+
+        // Checking the do virtual functions
         item1 = new();
         item2 = new();
 
         item1.randomize();
         item2.randomize();
-
-      item1.print();
-      item1.data = 5;
-      item2.print();
-      $display(item1.compare(item2));
-          
-        item1.data  = 0;
-        item1.empty = 0;
-        item1.rdy   = 0;
-        item1.valid = 0;
-        item1.sop   = 0;
-        item1.eop   = 0;
-        
-        item2.data  = 0;
-        item2.empty = 0;
-        item2.rdy   = 0;
-        item2.valid = 0;
-        item2.sop   = 0;
-        item2.eop   = 0;
-
-      $display(item1.compare(item2));
-
-        uvm_report_info("UVM Test", "Starting simulation", UVM_LOW);
-        $finish;
+        item1.do_print();
+        item2.do_print();
+        item1.do_copy(item2);
     end
-
-
-
-    task check_compare(const_header_remover_item item1, const_header_remover_item item2);
-      
-    endtask
-
 endmodule
