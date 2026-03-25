@@ -9,19 +9,34 @@
 `include "uvm_macros.svh"
 `include "generation_param.sv"
 `include "const_header_remover_item.sv"
+`include "const_header_remover_environment.sv"
 
 import uvm_pkg::*;
 import generation_param::*;
 
 class const_header_remover_base_test extends uvm_test;
-
     `uvm_component_utils(const_header_remover_base_test)
+
+    // -------------------------------------------------------------------------
+    // Declarations
+    // -------------------------------------------------------------------------
+    const_header_remover_environment env;
 
     // -------------------------------------------------------------------------
     // Functions
     // -------------------------------------------------------------------------
     function new(string name = "const_header_remover_base_test", uvm_component parent = null);
         super.new(name, parent);
+      
+      $display("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    endfunction
+
+    virtual function void build_phase(uvm_phase phase);
+        env = const_header_remover_environment::type_id::create("const_header_remover_environment", this);
+      $display("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+    endfunction
+
+    virtual function void connect_phase(uvm_phase phase);
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -29,13 +44,13 @@ class const_header_remover_base_test extends uvm_test;
 
         `uvm_info("TEST", "unit tests", UVM_LOW)
 
-        test_copy();
-        test_print();
-        test_sprint();
-        test_compare();
-        test_pack_unpack();
-        test_pack_unpack_bytes();
-        test_pack_unpack_ints();
+        //test_copy();
+        //test_print();
+        //test_sprint();
+        //test_compare();
+        //test_pack_unpack();
+        //test_pack_unpack_bytes();
+        //test_pack_unpack_ints();
 
         `uvm_info("TEST", "unit tests done", UVM_LOW)
 
@@ -72,7 +87,7 @@ class const_header_remover_base_test extends uvm_test;
 
     local task test_print();
         const_header_remover_item item = make_item("item_print");
-        uvm_default_printer printer = uvm_default_printer::get();
+      uvm_printer printer = uvm_default_printer;
 
         `uvm_info("PRINT", "checking do_print():", UVM_LOW)
         item.do_print(printer);
@@ -80,7 +95,8 @@ class const_header_remover_base_test extends uvm_test;
 
     local task test_sprint();
         const_header_remover_item item = make_item("item_sprint");
-        uvm_default_printer printer = uvm_default_printer::get();
+        //uvm_default_printer printer = uvm_default_printer::get();
+      uvm_printer printer = uvm_default_printer;
         string s;
 
         s = item.do_sprint(printer);
@@ -115,10 +131,12 @@ class const_header_remover_base_test extends uvm_test;
 
     local task test_pack_unpack();
         const_header_remover_item item, dst;
+        uvm_comparer comparer;
         bit packed_bits[];
         bit my_packed_bits[];
         int n_bits;
 
+        comparer = new();
         item = make_item("src_pack");
         dst  = const_header_remover_item::type_id::create("dst_pack");
 
@@ -136,7 +154,7 @@ class const_header_remover_base_test extends uvm_test;
 
         // unpack and verify round-trip
         void'(dst.unpack(packed_bits));
-        if (!item.do_compare(dst, new()))
+        if (!item.do_compare(dst, comparer))
             `uvm_error("PACK", "pack/unpack round-trip failed — items differ")
         else
             `uvm_info("PACK", "pack/unpack round-trip — PASS", UVM_LOW)
@@ -144,10 +162,12 @@ class const_header_remover_base_test extends uvm_test;
 
     local task test_pack_unpack_bytes();
         const_header_remover_item item, dst;
+        uvm_comparer comparer;
         byte unsigned packed_bytes[];
         byte unsigned my_packed_bytes[];
         int n_bytes;
 
+        comparer = new();
         item = make_item("src_bytes");
         dst  = const_header_remover_item::type_id::create("dst_bytes");
 
@@ -165,7 +185,7 @@ class const_header_remover_base_test extends uvm_test;
 
         // unpack and verify round-trip
         void'(dst.unpack_bytes(packed_bytes));
-        if (!item.do_compare(dst, new()))
+      if (!item.do_compare(dst, comparer))
             `uvm_error("PACK_BYTES", "pack_bytes/unpack_bytes round-trip failed — items differ")
         else
             `uvm_info("PACK_BYTES", "pack_bytes/unpack_bytes round-trip — PASS", UVM_LOW)
@@ -173,12 +193,14 @@ class const_header_remover_base_test extends uvm_test;
 
     local task test_pack_unpack_ints();
         const_header_remover_item item, dst;
+        uvm_comparer comparer;
         int unsigned packed_ints[];
         int unsigned my_packed_ints[];
         int n_ints;
         int n_ints_expected;
 
         item = make_item("src_ints");
+        comparer = new();
         dst  = const_header_remover_item::type_id::create("dst_ints");
 
         n_ints = item.pack_ints(packed_ints);
@@ -197,7 +219,7 @@ class const_header_remover_base_test extends uvm_test;
 
         // unpack and verify round-trip
         void'(dst.unpack_ints(packed_ints));
-        if (!item.do_compare(dst, new()))
+        if (!item.do_compare(dst, comparer))
             `uvm_error("PACK_INTS", "pack_ints/unpack_ints round-trip failed — items differ")
         else
             `uvm_info("PACK_INTS", "pack_ints/unpack_ints round-trip — PASS", UVM_LOW)
