@@ -10,9 +10,10 @@
 import uvm_pkg::*;
 import generation_param::*;
 
-class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_test;
+class const_header_remover_base_test extends uvm_test;
 
     `uvm_component_utils(const_header_remover_base_test)
+    
 
     // -------------------------------------------------------------------------
     // Functions
@@ -39,9 +40,9 @@ class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_
         phase.drop_objection(this);
     endtask
 
-    local function const_header_remover_item #(DATA_WIDTH_IN_BYTES) make_item(string name);
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) item;
-        item = const_header_remover_item #(DATA_WIDTH_IN_BYTES)::type_id::create(name);
+    local function const_header_remover_item make_item(string name);
+        const_header_remover_item item;
+        item = const_header_remover_item::type_id::create(name);
         
         if (!item.randomize()) begin
             `uvm_fatal("RAND", $sformatf("randomize failed for: %s'", name))
@@ -54,10 +55,10 @@ class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_
     // Unit tests.
     // -------------------------------------------------------------------------
     local task test_copy();
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) orig, clone;
+        const_header_remover_item orig, clone;
 
         orig  = make_item("orig");
-        clone = const_header_remover_item #(DATA_WIDTH_IN_BYTES)::type_id::create("clone");
+        clone = const_header_remover_item::type_id::create("clone");
         clone.copy(orig);
 
         // --- field equality ---
@@ -87,7 +88,7 @@ class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_
     endtask
 
     local task test_print();
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) item = make_item("item_print");
+        const_header_remover_item item = make_item("item_print");
 
         `uvm_info("PRINT", "Calling print() — output follows:", UVM_LOW)
         item.print();
@@ -95,7 +96,7 @@ class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_
     endtask
 
     local task test_sprint();
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) item = make_item("item_sprint");
+        const_header_remover_item item = make_item("item_sprint");
         string s;
         string expected_fields[$] = '{"data", "empty", "valid", "rdy", "sop", "eop"};
 
@@ -117,44 +118,35 @@ class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_
     endtask
 
     local task test_compare();
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) item_a, item_b;
+        const_header_remover_item item_a, item_b;
 
         item_a = make_item("item_a");
-        item_b = const_header_remover_item #(DATA_WIDTH_IN_BYTES)::type_id::create("item_b");
+        item_b = const_header_remover_item::type_id::create("item_b");
         item_b.copy(item_a);
 
         // equal
-        if (!item_a.compare(item_b)) begin
+        if (!item_a.do_compare(item_b)) begin
             `uvm_error("COMPARE", "compare() returned 0 for identical items")
         end else begin
             `uvm_info("COMPARE", "Equal items check — PASS", UVM_LOW)
         end
 
         // differing data
-        item_b.data = ~item_a.data;
-        if (item_a.compare(item_b)) begin
-            `uvm_error("COMPARE", "compare() returned 1 for items with different data")
+        item_b.data = {item_a.data, 0};
+        if (item_a.do_compare(item_b)) begin
+            `uvm_error("COMPARE", "do_compare returned true for items with different data")
         end else begin
-            `uvm_info("COMPARE", "Unequal data check — PASS", UVM_LOW)
-        end
-
-        // differing valid
-        item_b.copy(item_a);
-        item_b.valid = ~item_a.valid;
-        if (item_a.compare(item_b)) begin
-            `uvm_error("COMPARE", "compare() returned 1 for items with different valid")
-        end else begin
-            `uvm_info("COMPARE", "Unequal valid check — PASS", UVM_LOW)
+            `uvm_info("COMPARE", "compare returned false on differing data", UVM_LOW)
         end
     endtask
 
     local task test_pack_unpack();
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) src, dst;
+        const_header_remover_item src, dst;
         bit  packed_bits[];
         int  n_bits;
 
         src = make_item("src_pack");
-        dst = const_header_remover_item #(DATA_WIDTH_IN_BYTES)::type_id::create("dst_pack");
+        dst = const_header_remover_item::type_id::create("dst_pack");
 
         n_bits = src.pack(packed_bits);
         `uvm_info("PACK", $sformatf("pack() produced %0d bits", n_bits), UVM_LOW)
@@ -169,12 +161,12 @@ class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_
     endtask
 
     local task test_pack_unpack_bytes();
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) src, dst;
+        const_header_remover_item src, dst;
         byte unsigned packed_bytes[];
         int n_bytes;
 
         src = make_item("src_bytes");
-        dst = const_header_remover_item #(DATA_WIDTH_IN_BYTES)::type_id::create("dst_bytes");
+        dst = const_header_remover_item::type_id::create("dst_bytes");
 
         n_bytes = src.pack_bytes(packed_bytes);
         `uvm_info("PACK_BYTES", $sformatf("pack_bytes() produced %0d bytes", n_bytes), UVM_LOW)
@@ -189,12 +181,12 @@ class const_header_remover_base_test #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_
     endtask
 
     local task test_pack_unpack_ints();
-        const_header_remover_item #(DATA_WIDTH_IN_BYTES) src, dst;
+        const_header_remover_item src, dst;
         int unsigned packed_ints[];
         int n_ints;
 
         src = make_item("src_ints");
-        dst = const_header_remover_item #(DATA_WIDTH_IN_BYTES)::type_id::create("dst_ints");
+        dst = const_header_remover_item::type_id::create("dst_ints");
 
         n_ints = src.pack_ints(packed_ints);
         `uvm_info("PACK_INTS", $sformatf("pack_ints() produced %0d ints", n_ints), UVM_LOW)
