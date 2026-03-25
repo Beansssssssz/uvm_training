@@ -4,6 +4,9 @@
 // Description : item for const header remover
 // -----------------------------------------------------------------------------
 
+`ifndef CONST_HEADER_REMOVER_ITEM_SV
+`define CONST_HEADER_REMOVER_ITEM_SV
+
 `include "uvm_macros.svh"
 `include "generation_param.sv"
 
@@ -74,3 +77,4 @@ class const_header_remover_item extends uvm_object;
         `uvm_unpack_queue(data)
     endfunction
 endclass
+`endif
