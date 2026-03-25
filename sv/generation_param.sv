@@ -3,11 +3,11 @@
 // Author      : Ariel Hay
 // Description : The package for the generation parameters
 // -----------------------------------------------------------------------------
-package generation_param;
 
-    // data constraints
-    int unsigned data_min = 0;
-    int unsigned data_max = '1;
+`ifndef GENERATION_PARAM_SV
+`define GENERATION_PARAM_SV
+
+package generation_param;
 
     // empty constraints 
     int unsigned empty_min = 0;
@@ -21,4 +21,9 @@ package generation_param;
     int unsigned packet_min_words = 1;
     int unsigned packet_max_words = 100;
 
+    int DATA_WIDTH_IN_BYTES = 4;
+    typedef byte queue_of_byte[$];
+
 endpackage
+
+`endif

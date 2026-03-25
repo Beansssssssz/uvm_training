@@ -4,96 +4,77 @@
 // Description : item for const header remover
 // -----------------------------------------------------------------------------
 
+`ifndef CONST_HEADER_REMOVER_ITEM_SV
+`define CONST_HEADER_REMOVER_ITEM_SV
+
 `include "uvm_macros.svh"
+`include "generation_param.sv"
 
 import uvm_pkg::*;
 import generation_param::*;
 
-class const_header_remover_item #(int DATA_WIDTH_IN_BYTES = 4) extends uvm_object;
+class const_header_remover_item extends uvm_object;
 
     // -------------------------------------------------------------------------
-    // item fields
+    // Declarations.
     // -------------------------------------------------------------------------
-    rand bit [DATA_WIDTH_IN_BYTES * $bits(byte) - 1 : 0] data;
-    rand bit [$clog2(DATA_WIDTH_IN_BYTES) - 1 : 0]       empty;
-    rand bit valid;
-    rand bit rdy;
-    bit sop;
-    bit eop;
+    rand queue_of_byte data;
 
-    // field for packet size to decide when to send sop and eop
-    rand int packet_size;
-    bit mid_packet;
+    `uvm_object_utils(const_header_remover_item) // factory only, no field automation
+
 
     // -------------------------------------------------------------------------
-    // Constraints — all driven by generation_param package variables
-    // -------------------------------------------------------------------------
-
-    constraint c_data {
-        data inside {[data_min : data_max]};
-    }
-
-    constraint c_empty {
-        empty inside {[empty_min : empty_max]};
-    }
-
-    constraint c_valid {
-        valid dist {
-            1 := valid_weight,
-            0 := (100 - valid_weight)
-        };
-    }
-
-    constraint c_rdy {
-        rdy dist {
-            1 := rdy_weight,
-            0 := (100 - rdy_weight)
-        };
-    }
-
-    constraint c_packet_size {
-        if(mid_packet)
-            packet_size inside {packet_size};
-        else
-            data inside {[packet_min_words : packet_max_words]};
-    }
-
-    // -------------------------------------------------------------------------
-    // Constructor
+    // Functions.
     // -------------------------------------------------------------------------
     function new(string name = "const_header_remover_item");
         super.new(name);
     endfunction
 
+    virtual function void do_copy(uvm_object rhs);
+        const_header_remover_item rhs_;
+        super.do_copy(rhs);
 
-    // -------------------------------------------------------------------------
-    // Item functions
-    // -------------------------------------------------------------------------
-    function void post_randomize();
-        if(mid_packet) begin
-            sop = 1'b0;
-            packet_size--;
-            if (packet_size == 0) begin
-                mid_packet = 0;
-                eop = 1'b1;
-            end
-        end else begin
-            mid_packet = 1'b1;
-            sop = 1'b1;
-            eop = 1'b0;
+        if (!$cast(rhs_, rhs))
+            `uvm_fatal("DO_COPY", "Cast of rhs object failed")
+
+        this.data = rhs_.data;
+    endfunction
+
+    virtual function void do_print(uvm_printer printer);
+        super.do_print(printer);
+        foreach (data[i])
+            printer.print_field_int($sformatf("data[%0d]", i), data[i], $bits(byte));
+    endfunction
+
+    virtual function string do_sprint(uvm_printer printer);
+        string s;
+        foreach (data[i])
+            s = {s, $sformatf("data[%0d]=0x%0h ", i, data[i])};
+        return s;
+    endfunction
+
+    virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
+        const_header_remover_item rhs_;
+        if (!$cast(rhs_, rhs)) begin
+            `uvm_error("DO_COMPARE", "Cast of rhs object failed")
+            return 0;
         end
-    endfunction;
+        if (data.size() != rhs_.data.size()) return 0;
+        foreach (data[i]) begin
+            if (!comparer.compare_field_int($sformatf("data[%0d]", i), data[i], rhs_.data[i], $bits(byte)))
+                return 0;
+        end
+        return super.do_compare(rhs, comparer);
+    endfunction
 
-    // -------------------------------------------------------------------------
-    // UVM field macros
-    // -------------------------------------------------------------------------
-    `uvm_object_utils_begin(const_header_remover_item)
-        `uvm_field_int (data,  UVM_DEFAULT)
-        `uvm_field_int (empty, UVM_DEFAULT)
-        `uvm_field_int (valid, UVM_DEFAULT)
-        `uvm_field_int (rdy,   UVM_DEFAULT)
-        `uvm_field_int (sop,   UVM_DEFAULT)
-        `uvm_field_int (eop,   UVM_DEFAULT)
-    `uvm_object_utils_end
+    virtual function void do_pack(uvm_packer packer);
+        super.do_pack(packer);
+        `uvm_pack_queue(data)
+    endfunction
 
+    virtual function void do_unpack(uvm_packer packer);
+        super.do_unpack(packer);
+        `uvm_unpack_queue(data)
+    endfunction
 endclass
+`endif
