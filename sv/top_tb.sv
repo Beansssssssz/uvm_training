@@ -1,10 +1,11 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-`include "const_header_remover_item.sv"
-
 module top_tb;
+
+    uvm_root root;
     initial begin
-        run_test("const_header_remover_item_test");
+        root = uvm_root::get();
+        root.run_test("const_header_remover_item_test");
     end
 endmodule
